@@ -30,10 +30,6 @@ namespace MyHijriDateLib
         "Ramadan", "Shawwal", "Zhu al-Qi'dah", "Zhu al-Hijjah"
     };
 
-	//Declaring the functions to be used in the library
-    stHijriDate IncreaseByXDays(stHijriDate Date, int Days);
-    stHijriDate DecreaseByXDays(stHijriDate Date, int Days);
-
     // =========================================================================
     //  Year / Month utilities
     // =========================================================================
@@ -45,7 +41,7 @@ namespace MyHijriDateLib
             if (IndexInCycle == LeapHijriYears[i]) return true;
         return false;
     }
- 
+
     short NumberOfDaysInHijriYear(short Year)
     {
         return IsLeapHijriYear(Year) ? 355 : 354;
@@ -260,31 +256,31 @@ namespace MyHijriDateLib
     //  This corrects the occasional 1-day slip from the arithmetic model.
     // =========================================================================
     stHijriDate ConvertGregorianToHijriWeekdayCorrect(short Day, short Month, short Year,
-
         short HijriOffset = 0)
-
     {
-
         // Authoritative weekday from Gregorian algorithm
         short TargetWeekday = MyDateLib::GetDayOfWeekOrder(Day, Month, Year);
 
-        // Arithmetic approximation (without user offset)
+        // Arithmetic approximation (without user offset) - perform weekday
+        // correction first, then apply user HijriOffset as a final shift.
         stHijriDate Approx = ConvertGregorianToHijri(Day, Month, Year, 0);
 
-        // Compute absolute days for the approximation and apply user offset
-        long AbsApprox = GetAbsoluteHijriDays(Approx, 0);
-        long AbsWithUserOffset = AbsApprox + HijriOffset;
+        // Weekday of the approximation
+        short CalcWeekday = GetDayOfWeekIndex(Approx);
 
-        // Determine weekday after user offset was applied
-        stHijriDate AfterUserOffsetDate = GetHijriDateFromAbsoluteDays(AbsWithUserOffset);
-        short CalcWeekday = GetDayOfWeekIndex(AfterUserOffsetDate);
         short AutoOffset = TargetWeekday - CalcWeekday;
-        if (AutoOffset > 3) AutoOffset -= 7; // shortest path wrap
+        if (AutoOffset > 3) AutoOffset -= 7;   // shortest path wrap
         if (AutoOffset < -3) AutoOffset += 7;
 
-        // Apply auto-correction (which may be zero) on top of the user offset
-        long FinalAbs = AbsWithUserOffset + AutoOffset;
-        return GetHijriDateFromAbsoluteDays(FinalAbs);
+        if (AutoOffset == 0)
+        {
+            // Apply user offset and return
+            long Abs = GetAbsoluteHijriDays(Approx, 0) + HijriOffset;
+            return GetHijriDateFromAbsoluteDays(Abs);
+        }
+
+        long CorrectedAbsDays = GetAbsoluteHijriDays(Approx, 0) + AutoOffset + HijriOffset;
+        return GetHijriDateFromAbsoluteDays(CorrectedAbsDays);
     }
 
     stHijriDate ConvertGregorianToHijriWeekdayCorrect(stDate GregorianDate,

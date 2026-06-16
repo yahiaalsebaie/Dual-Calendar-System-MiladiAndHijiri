@@ -728,9 +728,10 @@ void ShowMainMenu()
         stHijriDate HToday = MyHijriDateLib::ConvertGregorianToHijriWeekdayCorrect(
             Today, GlobalHijriOffset);
 
-        cout << "  " << MyDateLib::DateToString(Today, enDateFormat::FullDateText) << "\n"
-            << "  " << MyHijriDateLib::PrintHijriDate(HToday, false)
-            << "  (Hijri offset: " << (int)GlobalHijriOffset << ")\n";
+        cout << "  " << MyDateLib::DateToString(Today, enDateFormat::FullDateText) << "\n" 
+            << "  " << to_string(HToday.Day) << "/"
+            << MyHijriDateLib::GetHijriMonthName(HToday.Month) << "/"
+            << to_string(HToday.Year) << " AH  (Hijri offset: " << (int)GlobalHijriOffset << ")\n";
         PrintSeparator('-');
 
         cout<< "  [1] Gregorian (Miladi) Calendar Tools\n"
