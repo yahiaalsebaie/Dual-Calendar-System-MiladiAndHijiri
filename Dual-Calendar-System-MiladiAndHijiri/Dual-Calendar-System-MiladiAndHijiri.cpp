@@ -813,6 +813,7 @@ void ShowMainMenu()
 int main()
 {
     LoadHijriOffset();
+    LoadShowHijriDayName();
 
     PrintAccuracyWarning();
 
