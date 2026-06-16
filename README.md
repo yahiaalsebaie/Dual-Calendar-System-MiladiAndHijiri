@@ -12,7 +12,9 @@ A production-grade, highly modular **C++11** library designed for multi-century 
 >     
 > 2. **Sighting Deviations:** Civil and religious calendars (e.g., the official _Umm al-Qura_ calendar) adapt dynamically to empirical visual verification. Consequently, this engine's raw astronomical conversions may experience a structural variance of **$\pm1$ to $\pm3$ days** depending on geographic boundaries and regional lunar horizons.
 >     
-> 3. **High-Risk Environment Restriction:** **DO NOT** deploy unadjusted raw outputs from this library in mission-critical synchronization tracks, legal financial execution frameworks, automated standard trading intervals, or supply-chain logistics directly tied to strict religious observations (e.g., _Ramadan_ or _Hajj_ absolute baselines). 4. **Runtime Realignment Protocol:** To resolve theoretical variance, systems engineers must leverage the internal dynamic runtime adjustment architecture (`Settings Console`) to inject calculated local spatial corrections into the physical database state configuration.
+> 3. **High-Risk Environment Restriction:** **DO NOT** deploy unadjusted raw outputs from this library in mission-critical synchronization tracks, legal financial execution frameworks, automated standard trading intervals, or supply-chain logistics directly tied to strict religious observations (e.g., _Ramadan_ or _Hajj_ absolute baselines). 
+>     
+> 4. **Runtime Realignment Protocol:** To resolve theoretical variance, systems engineers must leverage the internal dynamic runtime adjustment architecture (`Settings Console`) to inject calculated local spatial corrections into the physical database state configuration.
 >     
 
 ## 📑 Detailed Chronological Logic Specifications
