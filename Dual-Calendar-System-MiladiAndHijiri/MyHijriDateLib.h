@@ -261,8 +261,9 @@ namespace MyHijriDateLib
         // Authoritative weekday from Gregorian algorithm
         short TargetWeekday = MyDateLib::GetDayOfWeekOrder(Day, Month, Year);
 
-        // Arithmetic approximation (with user offset already applied)
-        stHijriDate Approx = ConvertGregorianToHijri(Day, Month, Year, HijriOffset);
+        // Arithmetic approximation (without user offset) - perform weekday
+        // correction first, then apply user HijriOffset as a final shift.
+        stHijriDate Approx = ConvertGregorianToHijri(Day, Month, Year, 0);
 
         // Weekday of the approximation
         short CalcWeekday = GetDayOfWeekIndex(Approx);
@@ -271,9 +272,14 @@ namespace MyHijriDateLib
         if (AutoOffset > 3) AutoOffset -= 7;   // shortest path wrap
         if (AutoOffset < -3) AutoOffset += 7;
 
-        if (AutoOffset == 0) return Approx;
+        if (AutoOffset == 0)
+        {
+            // Apply user offset and return
+            long Abs = GetAbsoluteHijriDays(Approx, 0) + HijriOffset;
+            return GetHijriDateFromAbsoluteDays(Abs);
+        }
 
-        long CorrectedAbsDays = GetAbsoluteHijriDays(Approx, 0) + AutoOffset;
+        long CorrectedAbsDays = GetAbsoluteHijriDays(Approx, 0) + AutoOffset + HijriOffset;
         return GetHijriDateFromAbsoluteDays(CorrectedAbsDays);
     }
 
