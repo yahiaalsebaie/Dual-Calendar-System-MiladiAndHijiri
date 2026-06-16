@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <iomanip>
+#include <limits>
 
 #include "MyGlobalTypes.h"
 #include "MyInputLib.h"
@@ -118,7 +119,10 @@ void PrintHeader(const string& Title)
 void PressEnterToContinue()
 {
     cout << "\n  Press ENTER to continue...";
-    system("pause>0");
+    // Clear any error state and consume leftover input then wait for the user to press Enter.
+    cin.clear();
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cin.get();
 }
 
 // Reads a Gregorian date from the user with full validation.
@@ -322,13 +326,19 @@ void ShowAddDaysMonthsYearsToDateScreen()
     int  Days = MyInputLib::ReadNumber("  Days to add   : ");
     int  Months = MyInputLib::ReadNumber("  Months to add : ");
     int  Years = MyInputLib::ReadNumber("  Years to add  : ");
+    int IncludeStart = MyInputLib::ReadNumberInRange(0, 1, "  Include start day? (1=Yes, 0=No)");
+
+    // If the user wants the starting day to be counted as day 1, we add (Days - 1)
+    int DaysToAdd = Days;
+    if (IncludeStart == 1 && DaysToAdd > 0) DaysToAdd = DaysToAdd - 1;
 
     stDate Result = D;
-    if (Days > 0) Result = MyDateLib::IncreaseByXDays(Result, Days);
+    if (DaysToAdd > 0) Result = MyDateLib::IncreaseByXDays(Result, DaysToAdd);
     if (Months > 0) Result = MyDateLib::IncreaseByXMonths(Result, Months);
     if (Years > 0) Result = MyDateLib::IncreaseByXYears(Result, Years);
 
     cout << "\n  Original : " << MyDateLib::DateToString(D, FullDateText) << "\n"
+        << "  Counting  : " << (IncludeStart == 1 ? "Start day INCLUDED" : "Start day EXCLUDED (start after)") << "\n"
         << "  Result   : " << MyDateLib::DateToString(Result, FullDateText) << "\n";
 }
 void ShowSubtractDaysMonthsYearsToDateScreen()

@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="Dual-Calendar-System-MiladiAndHijiri/Dual-Calendar-System-MiladiAndHijiri.vcxproj" />
+  <Project Path="Dual-Calendar-System-MiladiAndHijiri/Dual-Calendar-System-MiladiAndHijiri.vcxproj" Id="f0746a54-043c-4afc-9750-934abbb8eaf9" />
 </Solution>
