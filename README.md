@@ -92,16 +92,12 @@ The library is strictly self-contained and does not require external build syste
 
 ### Compile using GCC (C++11 standard or higher):
 
-Bash
-
-```
+```Bash
 g++ -std=c++11 Dual-Calendar-System-MiladiAndHijiri.cpp -o CalendarSystem
 ```
 
 ### Execution:
 
-Bash
-
-```
+```Bash
 ./CalendarSystem
 ```
