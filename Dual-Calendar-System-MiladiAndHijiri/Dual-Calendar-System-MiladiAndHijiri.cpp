@@ -10,19 +10,14 @@
 
 using namespace std;
 
-// =============================================================================
-//  Global application state
-// =============================================================================
-
 // Hijri manual offset: loaded from disk, may be modified by the user.
 // Passed into every Hijri conversion call that accepts it.
 short GlobalHijriOffset = 0;
+// Whether to show the Hijri day name in outputs. Persisted on disk.
+bool GlobalShowHijriDayName = true;
 
 const string OffsetFileName = "HijriOffset.txt";
-
-// =============================================================================
-//  Persistence Layer
-// =============================================================================
+const string ShowDayFileName = "ShowHijriDayName.txt";
 
 // Loads GlobalHijriOffset from HijriOffset.txt.
 // If the file doesn't exist or is unreadable, defaults to 0 and creates it.
@@ -46,6 +41,43 @@ void LoadHijriOffset()
             OutFile << 0;
             OutFile.close();
         }
+    }
+}
+
+// Loads GlobalShowHijriDayName from ShowHijriDayName.txt. Defaults to true.
+void LoadShowHijriDayName()
+{
+    ifstream InFile(ShowDayFileName);
+    if (InFile.is_open())
+    {
+        int Value = 1;
+        if (InFile >> Value)
+            GlobalShowHijriDayName = (Value != 0);
+        InFile.close();
+    }
+    else
+    {
+        GlobalShowHijriDayName = true;
+        ofstream OutFile(ShowDayFileName);
+        if (OutFile.is_open()) { OutFile << 1; OutFile.close(); }
+    }
+}
+
+// Saves the show/hide Hijri day name setting and updates runtime state.
+void SaveShowHijriDayName(bool Show)
+{
+    GlobalShowHijriDayName = Show;
+    ofstream OutFile(ShowDayFileName, ios::trunc);
+    if (OutFile.is_open())
+    {
+        OutFile << (Show ? 1 : 0);
+        OutFile.close();
+        cout << "\n  [OK] Setting saved to " << ShowDayFileName << "\n";
+    }
+    else
+    {
+        cout << "\n  [ERROR] Could not write to " << ShowDayFileName
+            << ". Change is active for this session only.\n";
     }
 }
 
@@ -189,10 +221,10 @@ void ShowSettingsScreen()
         PrintSeparator('-');
         cout << "  [1] Change offset\n";
         cout << "  [2] Reset offset to 0\n";
+        cout << "  [3] Show Hijri day name? " << (GlobalShowHijriDayName ? "Yes" : "No") << "\n";
         cout << "  [0] Back to Main Menu\n";
         PrintSeparator('-');
-
-        int Choice = MyInputLib::ReadNumberInRange(0, 2, "  Your choice");
+        int Choice = MyInputLib::ReadNumberInRange(0, 3, "  Your choice");
         switch (Choice)
         {
         case 1:
@@ -207,6 +239,14 @@ void ShowSettingsScreen()
             SaveHijriOffset(0);
             cout << "  Hijri offset reset to 0.\n";
             break;
+        case 3:
+        {
+            cout << "\n  Show Hijri day name in outputs? (1=Yes, 0=No)\n";
+            int v = MyInputLib::ReadNumberInRange(0, 1, "  Your choice");
+            SaveShowHijriDayName(v == 1);
+            cout << "  Setting updated.\n";
+            break;
+        }
         case 0:
             Stay = false;
             break;
@@ -231,8 +271,12 @@ void ShowTodayFullGregorianInfoScreen()
 
     // Also show today in Hijri
     stHijriDate HToday = MyHijriDateLib::ConvertGregorianToHijriWeekdayCorrect(D, GlobalHijriOffset);
-    cout << "\n  Hijri equiv : " << MyHijriDateLib::PrintHijriDate(HToday)
-        << "  (offset=" << (int)GlobalHijriOffset << ")\n";
+    cout << "\n  Hijri equiv : ";
+    if (GlobalShowHijriDayName)
+        cout << MyHijriDateLib::PrintHijriDate(HToday);
+    else
+        cout << to_string(HToday.Day) << "/" << MyHijriDateLib::GetHijriMonthName(HToday.Month) << "/" << to_string(HToday.Year) << " AH";
+    cout << "  (offset=" << (int)GlobalHijriOffset << ")\n";
 }
 
 void ShowConvertGregorianToHijriScreen()
@@ -506,8 +550,14 @@ void ShowTodayFullHijriInfoScreen()
     stDate Gr = MyDateLib::GetSystemDate();
     stHijriDate H = MyHijriDateLib::ConvertGregorianToHijriWeekdayCorrect(
         Gr, GlobalHijriOffset);
-    cout << "  Hijri date   : " << MyHijriDateLib::PrintHijriDate(H, false) << "\n"
-        << "  Day of week  : " << MyHijriDateLib::GetDayOfWeekName(H, false) << "\n"
+    cout << "  Hijri date   : ";
+    if (GlobalShowHijriDayName) cout << MyHijriDateLib::PrintHijriDate(H, false);
+    else cout << to_string(H.Day) << "/" << MyHijriDateLib::GetHijriMonthName(H.Month) << "/" << to_string(H.Year) << " AH";
+    cout << "\n";
+    cout << "  Day of week  : ";
+    if (GlobalShowHijriDayName) cout << MyHijriDateLib::GetDayOfWeekName(H, false);
+    else cout << "(hidden)";
+    cout << "\n"
         << "  Days in month: " << MyHijriDateLib::NumberOfDaysInHijriMonth(H) << "\n"
         << "  Days in year : " << MyHijriDateLib::NumberOfDaysInHijriYear(H.Year) << "\n"
         << "  Leap year?   : "
@@ -523,8 +573,10 @@ void ShowConvertHijriToGregorianScreen()
     cout << "  [NOTE] Approximate result - verify for religious rulings.\n\n";
     stHijriDate H = ReadHijriDate("  Enter Hijri date:");
     stDate Gr = MyHijriDateLib::ConvertHijriToGregorian(H, GlobalHijriOffset);
-    cout<<"\n  Hijri     : " << MyHijriDateLib::PrintHijriDate(H, false) << "\n"
-        << "  Gregorian : " << MyDateLib::DateToString(Gr, FullDateText) << "\n"
+    cout << "\n  Hijri     : ";
+    if (GlobalShowHijriDayName) cout << MyHijriDateLib::PrintHijriDate(H, false);
+    else cout << to_string(H.Day) << "/" << MyHijriDateLib::GetHijriMonthName(H.Month) << "/" << to_string(H.Year) << " AH";
+    cout << "\n  Gregorian : " << MyDateLib::DateToString(Gr, FullDateText) << "\n"
         << "  Offset    : " << (int)GlobalHijriOffset << " day(s) applied\n";
 }
 
@@ -728,10 +780,13 @@ void ShowMainMenu()
         stHijriDate HToday = MyHijriDateLib::ConvertGregorianToHijriWeekdayCorrect(
             Today, GlobalHijriOffset);
 
-        cout << "  " << MyDateLib::DateToString(Today, enDateFormat::FullDateText) << "\n" 
-            << "  " << to_string(HToday.Day) << "/"
-            << MyHijriDateLib::GetHijriMonthName(HToday.Month) << "/"
-            << to_string(HToday.Year) << " AH  (Hijri offset: " << (int)GlobalHijriOffset << ")\n";
+        cout << "  " << MyDateLib::DateToString(Today, enDateFormat::FullDateText) << "\n";
+        cout << "  ";
+        if (GlobalShowHijriDayName)
+            cout << MyHijriDateLib::PrintHijriDate(HToday);
+        else
+            cout << to_string(HToday.Day) << "/" << MyHijriDateLib::GetHijriMonthName(HToday.Month) << "/" << to_string(HToday.Year) << " AH";
+        cout << "  (Hijri offset: " << (int)GlobalHijriOffset << ")\n";
         PrintSeparator('-');
 
         cout<< "  [1] Gregorian (Miladi) Calendar Tools\n"

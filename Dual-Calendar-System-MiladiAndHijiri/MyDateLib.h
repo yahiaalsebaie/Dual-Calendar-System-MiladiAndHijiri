@@ -326,7 +326,9 @@ namespace MyDateLib
         short Col = StartDay;
         for (short d = 1; d <= TotalDays; d++)
         {
-            Out += "   " + string(d < 10 ? " " : "") + to_string(d) + " ";
+            // Each column is 7 chars wide to match the weekday header above.
+            // For single-digit days use two padding spaces, for two-digit use one.
+            Out += "   " + string(d < 10 ? "  " : " ") + to_string(d) + " ";
             Col++;
             if (Col == 7) { Out += "\n"; Col = 0; }
         }
