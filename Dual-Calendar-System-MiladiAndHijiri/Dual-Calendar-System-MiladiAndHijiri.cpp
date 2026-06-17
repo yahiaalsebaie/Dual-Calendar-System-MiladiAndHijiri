@@ -16,9 +16,13 @@ using namespace std;
 short GlobalHijriOffset = 0;
 // Whether to show the Hijri day name in outputs. Persisted on disk.
 bool GlobalShowHijriDayName = true;
+// Whether to show the Gregorian day name on the main screen instead of Hijri.
+// Persisted on disk.
+bool GlobalShowGregorianDayInMain = false;
 
 const string OffsetFileName = "HijriOffset.txt";
 const string ShowDayFileName = "ShowHijriDayName.txt";
+const string ShowGregorianDayFileName = "ShowGregorianDayInMain.txt";
 
 // Loads GlobalHijriOffset from HijriOffset.txt.
 // If the file doesn't exist or is unreadable, defaults to 0 and creates it.
@@ -42,6 +46,43 @@ void LoadHijriOffset()
             OutFile << 0;
             OutFile.close();
         }
+    }
+}
+
+// Loads GlobalShowGregorianDayInMain from ShowGregorianDayInMain.txt. Defaults to false.
+void LoadShowGregorianDayInMain()
+{
+    ifstream InFile(ShowGregorianDayFileName);
+    if (InFile.is_open())
+    {
+        int Value = 0;
+        if (InFile >> Value)
+            GlobalShowGregorianDayInMain = (Value != 0);
+        InFile.close();
+    }
+    else
+    {
+        GlobalShowGregorianDayInMain = false;
+        ofstream OutFile(ShowGregorianDayFileName);
+        if (OutFile.is_open()) { OutFile << 0; OutFile.close(); }
+    }
+}
+
+// Saves the preference whether to show Gregorian day on the Main screen.
+void SaveShowGregorianDayInMain(bool Show)
+{
+    GlobalShowGregorianDayInMain = Show;
+    ofstream OutFile(ShowGregorianDayFileName, ios::trunc);
+    if (OutFile.is_open())
+    {
+        OutFile << (Show ? 1 : 0);
+        OutFile.close();
+        cout << "\n  [OK] Setting saved to " << ShowGregorianDayFileName << "\n";
+    }
+    else
+    {
+        cout << "\n  [ERROR] Could not write to " << ShowGregorianDayFileName
+            << ". Change is active for this session only.\n";
     }
 }
 
@@ -226,9 +267,10 @@ void ShowSettingsScreen()
         cout << "  [1] Change offset\n";
         cout << "  [2] Reset offset to 0\n";
         cout << "  [3] Show Hijri day name? " << (GlobalShowHijriDayName ? "Yes" : "No") << "\n";
+        cout << "  [4] Show GREGORIAN day on Main screen instead of Hijri? " << (GlobalShowGregorianDayInMain ? "Yes" : "No") << "\n";
         cout << "  [0] Back to Main Menu\n";
         PrintSeparator('-');
-        int Choice = MyInputLib::ReadNumberInRange(0, 3, "  Your choice");
+        int Choice = MyInputLib::ReadNumberInRange(0, 4, "  Your choice");
         switch (Choice)
         {
         case 1:
@@ -237,17 +279,35 @@ void ShowSettingsScreen()
                 "  New offset (-3 to +3)");
             SaveHijriOffset((short)NewVal);
             cout << "  Hijri offset updated to " << NewVal << " day(s).\n";
+            // After changing offset offer to show Gregorian day on Main screen
+            cout << "\n  Show GREGORIAN day on Main screen instead of Hijri? (1=Yes, 0=No)\n";
+            int g = MyInputLib::ReadNumberInRange(0, 1, "  Your choice");
+            SaveShowGregorianDayInMain(g == 1);
             break;
         }
         case 2:
             SaveHijriOffset(0);
             cout << "  Hijri offset reset to 0.\n";
+            // Resetting offset — by default hide Gregorian day unless user chooses otherwise
+            cout << "\n  Show GREGORIAN day on Main screen instead of Hijri? (1=Yes, 0=No)\n";
+            {
+                int g = MyInputLib::ReadNumberInRange(0, 1, "  Your choice");
+                SaveShowGregorianDayInMain(g == 1);
+            }
             break;
         case 3:
         {
             cout << "\n  Show Hijri day name in outputs? (1=Yes, 0=No)\n";
             int v = MyInputLib::ReadNumberInRange(0, 1, "  Your choice");
             SaveShowHijriDayName(v == 1);
+            cout << "  Setting updated.\n";
+            break;
+        }
+        case 4:
+        {
+            cout << "\n  Show GREGORIAN day on Main screen instead of Hijri? (1=Yes, 0=No)\n";
+            int v = MyInputLib::ReadNumberInRange(0, 1, "  Your choice");
+            SaveShowGregorianDayInMain(v == 1);
             cout << "  Setting updated.\n";
             break;
         }
@@ -792,10 +852,18 @@ void ShowMainMenu()
 
         cout << "  " << MyDateLib::DateToString(Today, enDateFormat::FullDateText) << "\n";
         cout << "  ";
-        if (GlobalShowHijriDayName)
-            cout << MyHijriDateLib::PrintHijriDate(HToday);
+        if (GlobalShowGregorianDayInMain)
+        {
+            // Show the Gregorian day name according to system date
+            cout << MyDateLib::GetDayLongName(Today.Day, Today.Month, Today.Year);
+        }
         else
-            cout << to_string(HToday.Day) << "/" << MyHijriDateLib::GetHijriMonthName(HToday.Month) << "/" << to_string(HToday.Year) << " AH";
+        {
+            if (GlobalShowHijriDayName)
+                cout << MyHijriDateLib::PrintHijriDate(HToday);
+            else
+                cout << to_string(HToday.Day) << "/" << MyHijriDateLib::GetHijriMonthName(HToday.Month) << "/" << to_string(HToday.Year) << " AH";
+        }
         cout << "  (Hijri offset: " << (int)GlobalHijriOffset << ")\n";
         PrintSeparator('-');
 
